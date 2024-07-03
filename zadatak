@@ -1,0 +1,126 @@
+#include <iostream>
+#include <string>
+#include <vector>
+#include <memory>
+#include <algorithm>
+#include <exception>
+
+class Ljubimac {
+protected:
+    std::string ime;
+    int starost;
+    std::string vrsta;
+    double tezina;
+
+public:
+    Ljubimac(const std::string& ime, int starost, const std::string& vrsta, double tezina)
+        : ime(ime), starost(starost), vrsta(vrsta), tezina(tezina) {}
+
+    virtual ~Ljubimac() {}
+
+    virtual void prikaziDetalje() const = 0;
+};
+
+class Pas : public Ljubimac {
+private:
+    std::string rasa;
+
+public:
+    Pas(const std::string& ime, int starost, const std::string& vrsta, double tezina, const std::string& rasa)
+        : Ljubimac(ime, starost, vrsta, tezina), rasa(rasa) {}
+
+    ~Pas() {}
+
+    void prikaziDetalje() const override {
+        std::cout << "Pas: " << ime << ", Starost: " << starost << " godina, Vrsta: " << vrsta
+                  << ", Tezina: " << tezina << " kg, Rasa: " << rasa << std::endl;
+    }
+
+    bool operator==(const Pas& other) const {
+        return ime == other.ime && starost == other.starost;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Pas& p) {
+        os << "Pas: " << p.ime << ", Starost: " << p.starost << " godina, Vrsta: " << p.vrsta
+           << ", Tezina: " << p.tezina << " kg, Rasa: " << p.rasa;
+        return os;
+    }
+};
+
+class Macka : public Ljubimac {
+private:
+    int brojZivota;
+
+public:
+    Macka(const std::string& ime, int starost, const std::string& vrsta, double tezina, int brojZivota)
+        : Ljubimac(ime, starost, vrsta, tezina), brojZivota(brojZivota) {}
+
+    ~Macka() {}
+
+    void prikaziDetalje() const override {
+        std::cout << "Macka: " << ime << ", Starost: " << starost << " godina, Vrsta: " << vrsta
+                  << ", Tezina: " << tezina << " kg, Broj zivota: " << brojZivota << std::endl;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Macka& m) {
+        os << "Macka: " << m.ime << ", Starost: " << m.starost << " godina, Vrsta: " << m.vrsta
+           << ", Tezina: " << m.tezina << " kg, Broj zivota: " << m.brojZivota;
+        return os;
+    }
+};
+
+class KucniLjubimci {
+private:
+    std::vector<std::shared_ptr<Ljubimac>> ljubimci;
+
+public:
+    void dodajLjubimca(const std::shared_ptr<Ljubimac>& ljubimac) {
+        ljubimci.push_back(ljubimac);
+    }
+
+    void prikaziLjubimce() const {
+        if (ljubimci.empty()) {
+            throw std::runtime_error("Nema ljubimaca u kolekciji.");
+        }
+        for (const auto& ljubimac : ljubimci) {
+            ljubimac->prikaziDetalje();
+        }
+    }
+
+    std::shared_ptr<Ljubimac> najvecaTezina() const {
+        if (ljubimci.empty()) {
+            throw std::runtime_error("Nema ljubimaca u kolekciji.");
+        }
+        return *std::max_element(ljubimci.begin(), ljubimci.end(), [](const std::shared_ptr<Ljubimac>& a, const std::shared_ptr<Ljubimac>& b) {
+            return a->tezina < b->tezina;
+        });
+    }
+};
+
+int main() {
+    try {
+        KucniLjubimci kolekcija;
+
+        auto p1 = std::make_shared<Pas>("Rex", 5, "Pas", 20.5, "Labrador");
+        auto p2 = std::make_shared<Pas>("Bella", 3, "Pas", 15.0, "Beagle");
+        auto m1 = std::make_shared<Macka>("Whiskers", 4, "Macka", 4.5, 9);
+        auto m2 = std::make_shared<Macka>("Luna", 2, "Macka", 3.8, 8);
+
+        kolekcija.dodajLjubimca(p1);
+        kolekcija.dodajLjubimca(p2);
+        kolekcija.dodajLjubimca(m1);
+        kolekcija.dodajLjubimca(m2);
+
+        std::cout << "Svi ljubimci u kolekciji:" << std::endl;
+        kolekcija.prikaziLjubimce();
+
+        auto najteziLjubimac = kolekcija.najvecaTezina();
+        std::cout << "\nLjubimac s najvecom tezinom:" << std::endl;
+        najteziLjubimac->prikaziDetalje();
+
+    } catch (const std::exception& e) {
+        std::cerr << "Izuzetak: " << e.what() << std::endl;
+    }
+
+    return 0;
+}
